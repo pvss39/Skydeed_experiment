@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LandSentinel — Registered!</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f4f8;
+           display: flex; align-items: center; justify-content: center;
+           min-height: 100vh; padding: 20px; }
+    .card {
+      background: white; border-radius: 16px; padding: 48px 40px;
+      max-width: 520px; width: 100%; text-align: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    }
+    .icon { font-size: 64px; margin-bottom: 16px; }
+    h1 { color: #1a3a5c; font-size: 26px; margin-bottom: 12px; }
+    p  { color: #555; line-height: 1.7; margin-bottom: 16px; }
+    .highlight { background: #e8f4fd; border-radius: 8px; padding: 16px;
+                 color: #1a5276; font-size: 14px; margin: 20px 0; }
+    .telegram-btn {
+      display: inline-block; background: #229ED9; color: white;
+      padding: 14px 32px; border-radius: 10px; text-decoration: none;
+      font-size: 16px; font-weight: bold; margin: 16px 0;
+      transition: opacity 0.2s;
+    }
+    .telegram-btn:hover { opacity: 0.85; }
+    .skip { font-size: 12px; color: #aaa; margin-top: 8px; }
+    .steps { text-align: left; margin: 20px 0; }
+    .steps li { padding: 8px 0; color: #444; font-size: 14px;
+                border-bottom: 1px solid #f0f0f0; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">🛰</div>
+  <h1>You're registered!</h1>
+  <p>
+    <strong>{{ name }}</strong>, your plot <strong>"{{ plot_name }}"</strong>
+    has been added to LandSentinel monitoring.
+  </p>
+
+  <div class="highlight">
+    A confirmation email has been sent to <strong>{{ email }}</strong>.<br>
+    Check your inbox (and spam folder).
+  </div>
+
+  {% if telegram_link %}
+  <p>Connect Telegram to receive satellite images and alerts directly on your phone:</p>
+  <a class="telegram-btn" href="{{ telegram_link }}" target="_blank">
+    Connect Telegram (one tap)
+  </a>
+  <p class="skip">
+    Skip for now — images will be delivered to your email instead.
+  </p>
+  {% endif %}
+
+  <div class="steps">
+    <p style="font-weight:bold;color:#1a3a5c;margin-bottom:8px">What happens next:</p>
+    <ul style="list-style:none;padding:0">
+      <li>✅ Baseline satellite scan runs within 24 hours</li>
+      <li>🛰 Regular scans every {{ freq }} days</li>
+      <li>🔴 Alert sent immediately if change detected</li>
+      <li>📄 PDF evidence report available on request</li>
+    </ul>
+  </div>
+</div>
+</body>
+</html>
