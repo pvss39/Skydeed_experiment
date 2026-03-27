@@ -12,8 +12,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
-from config import APP_NAME, APP_TAGLINE, WEB_PORT
+from config import APP_NAME, APP_TAGLINE, WEB_PORT, JWT_SECRET
 import db
 
 log = logging.getLogger(__name__)
@@ -34,6 +35,9 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
 )
+
+# Required by authlib (Google OAuth) to store state in session
+app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
 
 # Allow Vercel frontend to call this API
 app.add_middleware(
