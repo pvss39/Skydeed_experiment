@@ -10,6 +10,7 @@ Flow:
 """
 
 import logging
+import os
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Request, Response
@@ -82,8 +83,9 @@ async def google_callback(request: Request):
     }
     access_token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
-    # Set token in cookie, redirect to dashboard
-    response = RedirectResponse(url="/dashboard")
+    # Set token in cookie, redirect to frontend dashboard
+    frontend_url = os.getenv("FRONTEND_URL", "https://skydeed-frontend.vercel.app")
+    response = RedirectResponse(url=f"{frontend_url}/dashboard")
     response.set_cookie(
         key="token",
         value=access_token,

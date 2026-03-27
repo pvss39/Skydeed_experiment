@@ -43,9 +43,10 @@ app.add_middleware(SessionMiddleware, secret_key=JWT_SECRET)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",       # local Next.js dev
-        "https://*.vercel.app",        # Vercel preview deployments
-        "https://skydeed.in",          # production domain
+        "http://localhost:3000",                        # local Next.js dev
+        "https://skydeed-frontend.vercel.app",          # Vercel production
+        "https://skydeed-frontend-oqezn0mx2-pvss39s-projects.vercel.app",  # Vercel preview
+        "https://skydeed.in",                           # production domain
     ],
     allow_credentials=True,
     allow_methods=["*"],
