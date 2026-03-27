@@ -44,12 +44,23 @@ def update_profile(body: UpdateUserRequest, request: Request):
     """Update user profile settings."""
     user = get_current_user(request)
 
+    ph = db._ph()
     with db.get_conn() as conn:
-        if body.name:
-            conn.execute("UPDATE users SET name=? WHERE id=?", (body.name, user["id"]))
-        if body.language:
-            conn.execute("UPDATE users SET language=? WHERE id=?", (body.language, user["id"]))
-        if body.phone:
-            conn.execute("UPDATE users SET phone=? WHERE id=?", (body.phone, user["id"]))
+        if db.USE_POSTGRES:
+            cur = conn.cursor()
+            if body.name:
+                cur.execute(f"UPDATE users SET name={ph} WHERE id={ph}", (body.name, user["id"]))
+            if body.language:
+                cur.execute(f"UPDATE users SET language={ph} WHERE id={ph}", (body.language, user["id"]))
+            if body.phone:
+                cur.execute(f"UPDATE users SET phone={ph} WHERE id={ph}", (body.phone, user["id"]))
+            conn.commit()
+        else:
+            if body.name:
+                conn.execute(f"UPDATE users SET name={ph} WHERE id={ph}", (body.name, user["id"]))
+            if body.language:
+                conn.execute(f"UPDATE users SET language={ph} WHERE id={ph}", (body.language, user["id"]))
+            if body.phone:
+                conn.execute(f"UPDATE users SET phone={ph} WHERE id={ph}", (body.phone, user["id"]))
 
     return {"message": "Profile updated"}
