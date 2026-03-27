@@ -83,18 +83,9 @@ async def google_callback(request: Request):
     }
     access_token = jwt.encode(payload, JWT_SECRET, algorithm="HS256")
 
-    # Set token in cookie, redirect to frontend dashboard
+    # Redirect to frontend with token in URL (cross-domain — cookies don't work)
     frontend_url = os.getenv("FRONTEND_URL", "https://skydeed-frontend.vercel.app")
-    response = RedirectResponse(url=f"{frontend_url}/dashboard")
-    response.set_cookie(
-        key="token",
-        value=access_token,
-        httponly=True,       # JS cannot read it (security)
-        secure=True,         # HTTPS only
-        samesite="lax",
-        max_age=JWT_EXPIRE_DAYS * 86400,
-    )
-    return response
+    return RedirectResponse(url=f"{frontend_url}/dashboard?token={access_token}")
 
 
 @router.post("/logout")

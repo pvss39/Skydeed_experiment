@@ -14,11 +14,17 @@ import db
 
 def get_current_user(request: Request) -> dict:
     """
-    Read JWT token from cookie.
+    Read JWT token from Authorization header (Bearer) or cookie.
     Returns user dict from DB.
     Raises 401 if not logged in or token invalid.
     """
-    token = request.cookies.get("token")
+    # Try Authorization: Bearer <token> header first (frontend uses this)
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+    else:
+        token = request.cookies.get("token")
+
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
