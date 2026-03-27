@@ -64,18 +64,18 @@ async def google_callback(request: Request):
         return RedirectResponse(url="/login?error=no_email")
 
     # Find or create user in database
-    user_id = db.upsert_web_user(
+    user = db.upsert_web_user(
         email=email,
         name=name,
         picture_url=picture,
         google_sub=google_sub,
     )
 
-    log.info(f"[auth] Login: {email} (user_id={user_id})")
+    log.info(f"[auth] Login: {email} (user_id={user['id']})")
 
     # Issue JWT token
     payload = {
-        "sub":   str(user_id),
+        "sub":   str(user["id"]),
         "email": email,
         "name":  name,
         "exp":   datetime.utcnow() + timedelta(days=JWT_EXPIRE_DAYS),
