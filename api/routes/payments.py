@@ -113,11 +113,20 @@ async def razorpay_webhook(request: Request):
         plan    = notes.get("plan", "starter")
 
         if user_id:
+            ph = db._ph()
             with db.get_conn() as conn:
-                conn.execute(
-                    "UPDATE users SET subscription_status='active', plan=? WHERE id=?",
-                    (plan, int(user_id)),
-                )
+                if db.USE_POSTGRES:
+                    cur = conn.cursor()
+                    cur.execute(
+                        f"UPDATE users SET subscription_status='active', plan={ph} WHERE id={ph}",
+                        (plan, int(user_id)),
+                    )
+                    conn.commit()
+                else:
+                    conn.execute(
+                        f"UPDATE users SET subscription_status='active', plan={ph} WHERE id={ph}",
+                        (plan, int(user_id)),
+                    )
             log.info(f"[payments] Activated plan={plan} for user_id={user_id}")
 
     return {"status": "ok"}

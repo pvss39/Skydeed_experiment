@@ -334,45 +334,91 @@ def get_user_by_email(email: str) -> sqlite3.Row | None:
 
 def create_plot(user_id: int, name: str, geojson_polygon: dict,
                 scan_frequency_days: int = 5) -> int:
+    ph = _ph()
     with get_conn() as conn:
-        cur = conn.execute(
-            """INSERT INTO plots (user_id, name, geojson_polygon, scan_frequency_days)
-               VALUES (?, ?, ?, ?)""",
-            (user_id, name, json.dumps(geojson_polygon), scan_frequency_days),
-        )
-        return cur.lastrowid
+        if USE_POSTGRES:
+            cur = conn.cursor()
+            cur.execute(
+                f"""INSERT INTO plots (user_id, name, geojson_polygon, scan_frequency_days)
+                   VALUES ({ph}, {ph}, {ph}, {ph}) RETURNING id""",
+                (user_id, name, json.dumps(geojson_polygon), scan_frequency_days),
+            )
+            row = cur.fetchone()
+            conn.commit()
+            return row["id"]
+        else:
+            cur = conn.execute(
+                f"""INSERT INTO plots (user_id, name, geojson_polygon, scan_frequency_days)
+                   VALUES ({ph}, {ph}, {ph}, {ph})""",
+                (user_id, name, json.dumps(geojson_polygon), scan_frequency_days),
+            )
+            return cur.lastrowid
 
 
 def get_plot(plot_id: int) -> sqlite3.Row | None:
+    ph = _ph()
     with get_conn() as conn:
-        return conn.execute("SELECT * FROM plots WHERE id = ?", (plot_id,)).fetchone()
+        if USE_POSTGRES:
+            cur = conn.cursor()
+            cur.execute(f"SELECT * FROM plots WHERE id = {ph}", (plot_id,))
+            return cur.fetchone()
+        else:
+            return conn.execute(f"SELECT * FROM plots WHERE id = {ph}", (plot_id,)).fetchone()
 
 
 def get_plot_by_name(user_id: int, name: str) -> sqlite3.Row | None:
+    ph = _ph()
     with get_conn() as conn:
-        return conn.execute(
-            "SELECT * FROM plots WHERE user_id = ? AND name = ? AND is_active = 1",
-            (user_id, name),
-        ).fetchone()
+        if USE_POSTGRES:
+            cur = conn.cursor()
+            cur.execute(
+                f"SELECT * FROM plots WHERE user_id = {ph} AND name = {ph} AND is_active = 1",
+                (user_id, name),
+            )
+            return cur.fetchone()
+        else:
+            return conn.execute(
+                f"SELECT * FROM plots WHERE user_id = {ph} AND name = {ph} AND is_active = 1",
+                (user_id, name),
+            ).fetchone()
 
 
-def get_user_plots(user_id: int) -> list[sqlite3.Row]:
+def get_user_plots(user_id: int) -> list:
+    ph = _ph()
     with get_conn() as conn:
-        return conn.execute(
-            "SELECT * FROM plots WHERE user_id = ? AND is_active = 1 ORDER BY created_at",
-            (user_id,),
-        ).fetchall()
+        if USE_POSTGRES:
+            cur = conn.cursor()
+            cur.execute(
+                f"SELECT * FROM plots WHERE user_id = {ph} AND is_active = 1 ORDER BY created_at",
+                (user_id,),
+            )
+            return cur.fetchall()
+        else:
+            return conn.execute(
+                f"SELECT * FROM plots WHERE user_id = {ph} AND is_active = 1 ORDER BY created_at",
+                (user_id,),
+            ).fetchall()
 
 
-def get_plots_due_for_scan() -> list[sqlite3.Row]:
+def get_plots_due_for_scan() -> list:
     """Return active plots where last_scan_date + frequency <= today (or never scanned)."""
     with get_conn() as conn:
-        return conn.execute(
-            """SELECT * FROM plots WHERE is_active = 1 AND (
-                last_scan_date IS NULL OR
-                date(last_scan_date, '+' || scan_frequency_days || ' days') <= date('now')
-            )"""
-        ).fetchall()
+        if USE_POSTGRES:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT * FROM plots WHERE is_active = 1 AND (
+                    last_scan_date IS NULL OR
+                    last_scan_date::date + (scan_frequency_days || ' days')::interval <= CURRENT_DATE
+                )
+            """)
+            return cur.fetchall()
+        else:
+            return conn.execute(
+                """SELECT * FROM plots WHERE is_active = 1 AND (
+                    last_scan_date IS NULL OR
+                    date(last_scan_date, '+' || scan_frequency_days || ' days') <= date('now')
+                )"""
+            ).fetchall()
 
 
 def set_plot_baseline(plot_id: int, ndvi: float, ndbi: float,
@@ -399,10 +445,14 @@ def set_plot_baseline(plot_id: int, ndvi: float, ndbi: float,
 
 
 def update_plot_last_scan(plot_id: int, date_str: str):
+    ph = _ph()
     with get_conn() as conn:
-        conn.execute(
-            "UPDATE plots SET last_scan_date=? WHERE id=?", (date_str, plot_id)
-        )
+        if USE_POSTGRES:
+            cur = conn.cursor()
+            cur.execute(f"UPDATE plots SET last_scan_date={ph} WHERE id={ph}", (date_str, plot_id))
+            conn.commit()
+        else:
+            conn.execute(f"UPDATE plots SET last_scan_date={ph} WHERE id={ph}", (date_str, plot_id))
 
 
 # ── Scan helpers ──────────────────────────────────────────────────────────────
@@ -450,12 +500,21 @@ def save_scan(
             return cur.lastrowid
 
 
-def get_recent_scans(plot_id: int, limit: int = 5) -> list[sqlite3.Row]:
+def get_recent_scans(plot_id: int, limit: int = 5) -> list:
+    ph = _ph()
     with get_conn() as conn:
-        return conn.execute(
-            "SELECT * FROM scans WHERE plot_id=? ORDER BY created_at DESC LIMIT ?",
-            (plot_id, limit),
-        ).fetchall()
+        if USE_POSTGRES:
+            cur = conn.cursor()
+            cur.execute(
+                f"SELECT * FROM scans WHERE plot_id={ph} ORDER BY created_at DESC LIMIT {ph}",
+                (plot_id, limit),
+            )
+            return cur.fetchall()
+        else:
+            return conn.execute(
+                f"SELECT * FROM scans WHERE plot_id={ph} ORDER BY created_at DESC LIMIT {ph}",
+                (plot_id, limit),
+            ).fetchall()
 
 
 if __name__ == "__main__":

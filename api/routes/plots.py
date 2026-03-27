@@ -94,12 +94,22 @@ def update_plot(plot_id: int, body: UpdatePlotRequest, request: Request):
     if not plot or plot["user_id"] != user["id"]:
         raise HTTPException(status_code=404, detail="Plot not found")
 
+    ph = db._ph()
     with db.get_conn() as conn:
-        if body.name is not None:
-            conn.execute("UPDATE plots SET name=? WHERE id=?", (body.name, plot_id))
-        if body.scan_frequency_days is not None:
-            conn.execute("UPDATE plots SET scan_frequency_days=? WHERE id=?",
-                         (body.scan_frequency_days, plot_id))
+        if db.USE_POSTGRES:
+            cur = conn.cursor()
+            if body.name is not None:
+                cur.execute(f"UPDATE plots SET name={ph} WHERE id={ph}", (body.name, plot_id))
+            if body.scan_frequency_days is not None:
+                cur.execute(f"UPDATE plots SET scan_frequency_days={ph} WHERE id={ph}",
+                             (body.scan_frequency_days, plot_id))
+            conn.commit()
+        else:
+            if body.name is not None:
+                conn.execute(f"UPDATE plots SET name={ph} WHERE id={ph}", (body.name, plot_id))
+            if body.scan_frequency_days is not None:
+                conn.execute(f"UPDATE plots SET scan_frequency_days={ph} WHERE id={ph}",
+                             (body.scan_frequency_days, plot_id))
 
     return {"message": "Plot updated"}
 
@@ -113,8 +123,14 @@ def delete_plot(plot_id: int, request: Request):
     if not plot or plot["user_id"] != user["id"]:
         raise HTTPException(status_code=404, detail="Plot not found")
 
+    ph = db._ph()
     with db.get_conn() as conn:
-        conn.execute("UPDATE plots SET is_active=0 WHERE id=?", (plot_id,))
+        if db.USE_POSTGRES:
+            cur = conn.cursor()
+            cur.execute(f"UPDATE plots SET is_active=0 WHERE id={ph}", (plot_id,))
+            conn.commit()
+        else:
+            conn.execute(f"UPDATE plots SET is_active=0 WHERE id={ph}", (plot_id,))
 
     return {"message": "Plot deactivated"}
 
